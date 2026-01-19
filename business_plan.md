@@ -9,7 +9,7 @@
 **Goal:** Leverage thermodynamics to improve solar asset performance.
 
 ### 2.1 Technical Background
-Solar panels lose efficiency as they heat up (~0.4% loss per °C above 25°C). By maintaining lower operating temperatures, we can unlock suppressed potential energy. The core engineering challenge is achieving this cooling with a net-positive energy balance.
+Solar panels lose efficiency as they heat up (~0.4% loss per °C above 25°C). By maintaining lower operating temperatures, we can unlock suppressed potential energy. The core engineering challenge is achieving this cooling with a net-positive energy balance. For a detailed analysis of temperature effects, see the [Thermal Coefficient Review](reports/thermal_coefficient_review.md).
 
 ### 2.2 Subsystem Breakdown
 To tackle this, we divide the solution into four major subsystems:
