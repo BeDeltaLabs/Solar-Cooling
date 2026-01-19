@@ -1,6 +1,7 @@
 # Business Planning Tasks
 
 - [ ] Define Business Scope and Objectives <!-- id: 0 -->
+- [x] Setup MkDocs Documentation Site <!-- id: 7 -->
 - [x] Analyze Existing Context (Solar Cooling workspace) <!-- id: 1 -->
 - [ ] Create Business Plan Structure <!-- id: 2 -->
     - [ ] Technical Roadmap (Prototype & Physics Validation)
