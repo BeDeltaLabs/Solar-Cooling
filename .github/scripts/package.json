@@ -1,0 +1,15 @@
+{
+    "name": "notion-sync-scripts",
+    "version": "1.0.0",
+    "description": "Scripts to sync markdown files to Notion with automatic subpage creation",
+    "type": "module",
+    "scripts": {
+        "sync": "node sync-to-notion.js"
+    },
+    "dependencies": {
+        "@notionhq/client": "^2.2.15",
+        "@tryfabric/martian": "^1.2.4",
+        "gray-matter": "^4.0.3",
+        "glob": "^10.3.10"
+    }
+}
