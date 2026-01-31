@@ -4,10 +4,10 @@ on:
   push:
     branches:
       - master
-    paths:
-      - '**.md'
-      - '!NOTION_SYNC_*.md'
-      - '!EXAMPLE_*.md'
+    # paths:
+    #   - '**.md'
+    #   - '!NOTION_SYNC_*.md'
+    #   - '!EXAMPLE_*.md'
 
 jobs:
   sync_to_notion:

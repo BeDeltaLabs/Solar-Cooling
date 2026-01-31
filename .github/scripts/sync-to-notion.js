@@ -34,12 +34,12 @@ if (!PARENT_PAGE_ID) {
 const notion = new Client({ auth: NOTION_TOKEN });
 
 /**
- * Get all child pages of the parent page
+ * Get all child pages recursively
  */
-async function getExistingPages() {
+async function getExistingPagesRecursive(parentId, prefix = '') {
     try {
         const response = await notion.blocks.children.list({
-            block_id: PARENT_PAGE_ID,
+            block_id: parentId,
             page_size: 100,
         });
 
@@ -47,15 +47,27 @@ async function getExistingPages() {
         for (const block of response.results) {
             if (block.type === 'child_page') {
                 const title = block.child_page?.title || '';
-                pages[title] = block.id;
+                const fullPath = prefix ? `${prefix}/${title}` : title;
+                pages[fullPath] = block.id;
+
+                // Recursively get children of this page
+                const childPages = await getExistingPagesRecursive(block.id, fullPath);
+                Object.assign(pages, childPages);
             }
         }
 
         return pages;
     } catch (error) {
-        console.error('Error fetching existing pages:', error.message);
+        console.error(`Error fetching existing pages for ${parentId}:`, error.message);
         return {};
     }
+}
+
+/**
+ * Get all child pages of the parent page
+ */
+async function getExistingPages() {
+    return await getExistingPagesRecursive(PARENT_PAGE_ID);
 }
 
 /**
@@ -83,6 +95,59 @@ async function convertMarkdownToBlocks(markdownContent) {
 }
 
 /**
+ * Create or get a folder page
+ */
+async function createFolderPage(folderPath, existingPages) {
+    // Check if folder page already exists
+    if (existingPages[folderPath]) {
+        return existingPages[folderPath];
+    }
+
+    const parts = folderPath.split('/');
+    const folderName = parts[parts.length - 1];
+
+    // Determine parent ID
+    let parentId = PARENT_PAGE_ID;
+
+    // If this folder has a parent folder, ensure parent exists first
+    if (parts.length > 1) {
+        const parentPath = parts.slice(0, -1).join('/');
+        parentId = await createFolderPage(parentPath, existingPages);
+    }
+
+    console.log(`📁 Creating folder page: ${folderPath}`);
+
+    // Create the folder page
+    const folderPage = await notion.pages.create({
+        parent: { page_id: parentId },
+        properties: {
+            title: {
+                title: [{
+                    text: { content: folderName }
+                }]
+            }
+        },
+        children: [{
+            object: 'block',
+            type: 'paragraph',
+            paragraph: {
+                rich_text: [{
+                    type: 'text',
+                    text: { content: `📂 ${folderName}` }
+                }]
+            }
+        }]
+    });
+
+    // Cache this folder page
+    existingPages[folderPath] = folderPage.id;
+
+    console.log(`  ✅ Created folder: ${folderPath} (ID: ${folderPage.id})`);
+
+    return folderPage.id;
+}
+
+/**
  * Create or update a Notion page
  */
 async function syncMarkdownFile(filePath, existingPages) {
@@ -105,8 +170,20 @@ async function syncMarkdownFile(filePath, existingPages) {
         // Convert markdown to Notion blocks
         const blocks = await convertMarkdownToBlocks(markdownContent);
 
-        // Check if page already exists
-        const existingPageId = existingPages[title];
+        // Determine parent page ID based on folder structure
+        let parentId = PARENT_PAGE_ID;
+        const dirName = path.dirname(filePath);
+
+        if (dirName && dirName !== '.') {
+            // Normalize path separators to forward slashes
+            const normalizedDir = dirName.replace(/\\/g, '/');
+            // Create folder pages if they don't exist
+            parentId = await createFolderPage(normalizedDir, existingPages);
+        }
+
+        // Check if page already exists (using full path including folders)
+        const pageKey = dirName && dirName !== '.' ? `${dirName.replace(/\\/g, '/')}/${title}` : title;
+        const existingPageId = existingPages[pageKey];
 
         if (existingPageId) {
             // Update existing page
@@ -139,7 +216,7 @@ async function syncMarkdownFile(filePath, existingPages) {
             console.log(`  + Creating new page: ${title}`);
 
             const newPage = await notion.pages.create({
-                parent: { page_id: PARENT_PAGE_ID },
+                parent: { page_id: parentId },
                 properties: {
                     title: {
                         title: [{
@@ -149,6 +226,9 @@ async function syncMarkdownFile(filePath, existingPages) {
                 },
                 children: blocks.slice(0, 100), // Notion API limit
             });
+
+            // Cache the new page
+            existingPages[pageKey] = newPage.id;
 
             console.log(`  ✅ Created: ${title} (ID: ${newPage.id})`);
         }
