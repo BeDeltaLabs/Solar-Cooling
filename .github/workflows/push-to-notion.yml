@@ -28,7 +28,7 @@ jobs:
       
       - name: Install Dependencies
         working-directory: .github/scripts
-        run: npm intall
+        run: npm install
       
       - name: Sync to Notion
         working-directory: .github/scripts

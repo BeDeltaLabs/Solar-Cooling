@@ -1,7 +1,7 @@
 # Energy and Power Balance Calculation: Solar Cooling Feasibility
 
 **Date:** 2026-01-16
-**Status:** Draft / Theoretical Model  
+**Status:** Draft / Theoretical Model 
 
 ## 1. Executive Summary
 
